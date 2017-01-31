@@ -1,0 +1,225 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = true;}PARSER_BEGIN(MyNewGrammar)package pkg;
+
+public class MyNewGrammar{
+  static int count = 0;
+  static MySymbolTable st = new MySymbolTable();
+  static SemanticAnalyzer sa = new SemanticAnalyzer();
+  static IRGeneration ir = new IRGeneration();	
+    public static void main(String args []) throws ParseException  {    MyNewGrammar parser = new MyNewGrammar(System.in);    while (true)    {      System.out.println("Reading from standard input...");      System.out.print("Enter code of Language X :");      try      {		SimpleNode s = parser.one_line();
+		s.dump("");
+//		System.out.println("Intermediate Code generation: ");
+		System.out.println(ir.InterMedCode(s));
+		System.out.println("\n");
+		ir.assemblyCode();
+		System.out.println("\n");
+		System.out.println("\n");
+		//System.out.println("Declaration checking: ");
+		//sa.typeChecking(s);
+		
+//        switch (MyNewGrammar.one_line())
+//        {
+//          case 0 : 
+//          System.out.println("OK.");
+//          break;
+//          case 1 : 
+//          System.out.println("Goodbye.");
+//          break;
+//          default : 
+//          break;
+//        }
+      }      catch (Exception e)      {        System.out.println("NOK.");        System.out.println(e.getMessage());        MyNewGrammar.ReInit(System.in);      }      catch (Error e)      {        System.out.println("Oops.");        System.out.println(e.getMessage());        break;      }    }  }}PARSER_END(MyNewGrammar)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : /* OPERATORS */{
+  < ASSIGNMENT : "=" >| < PLUS : "+" >| < MINUS : "-" >| < MULTIPLY : "*" >| < DIVIDE : "/" >
+| < EQUAL : "==" >
+| < NOTEQUAL : "!=" >
+| < GREATER : ">" >
+| < LESS : "<" >
+| < GREATEREQ : ">=" >
+| < LESSEQ : "<=" >
+| < INCREMENT : "++" >
+| < DECREMENT : "--" >}
+
+TOKEN : /* BLOCKS AND LABELS */
+{
+  < BEGIN : "StartProgram" >
+| < END : "endProgram" >
+| < INITBLOCK : "initializationBlock:" >
+| < CODEBLOCK : "codeBlock:" >
+}
+TOKEN :{
+  < OUTPUT : "outString" >
+| < IFSTART : "ifStart" >
+| < ELSEST : "else" >
+| < IFEND : "ifEnd" >
+| < LOOPSTART : "forLoop" >
+| < LOOPEND : "endLoop" >
+| < INTEGER : "int" >
+| < CONSTANT : (< DIGIT >)+ >
+| < #DIGIT : [ "0"-"9" ] >
+| < ID : (< ALPHA >)+ >
+| < ALPHA : ["a"-"z"] >
+| < LBRACKET : "(" >
+| < RBRACKET : ")" >}SimpleNode one_line() :{}{  xpro() ";"  {    return jjtThis;  }}void xpro() :{
+  Token t;
+}{  < BEGIN >
+  	blocks()
+  < END >}
+void blocks() :
+{}
+{
+  < INITBLOCK >
+  	declarations()
+  < CODEBLOCK >
+  	statements()
+}
+
+void declarations() :
+{
+  Token t;
+}
+{
+  (
+    < INTEGER > Variable("int")
+    (
+      t = < ASSIGNMENT > { jjtThis.value = t.image; jjtThis.setType("ASSIGNMENTOP"); }
+       (        < ID > | < CONSTANT >
+      )+    )*
+  	";"
+  )*
+}
+
+void statements() :
+{}
+{
+  (
+    ifstatement()
+  | loopstatement()
+  | outputstatement()  )*}
+
+void ifstatement() :
+{}
+{
+  < IFSTART >
+  comparison()
+  expression()
+  (    < ELSEST >
+  	expression()
+  )*
+  < IFEND >
+}
+
+void loopstatement() :
+{}
+{
+  < LOOPSTART >
+  
+  < ID > < ASSIGNMENT > < CONSTANT >
+
+  comparison()
+
+  < ID > ( < INCREMENT > | < DECREMENT > )+	
+  	expression()
+  
+  < LOOPEND >
+}
+
+void Integral() : { }
+{    Variable("")
+  | < CONSTANT >
+}
+
+void LHS() : { }
+{
+  Variable("")
+}
+
+void RHS() :
+{
+  Token t;
+}
+{
+  Integral()
+  (
+	(
+  	  t = < PLUS > { jjtThis.value = t.image; jjtThis.setType("PLUSOP"); }
+  	| t = < MINUS > { jjtThis.value = t.image; jjtThis.setType("MINUSOP"); }
+  	| t = < MULTIPLY > { jjtThis.value = t.image; jjtThis.setType("MULTOP"); }
+  	| t = < DIVIDE > { jjtThis.value = t.image; jjtThis.setType("DIVIDEOP"); }
+  	)+
+  Integral()
+  )*
+}
+
+void outputstatement() :
+{}
+{
+ < OUTPUT > < LBRACKET > < ID > < RBRACKET > ";"} 
+void expression():
+{}
+{
+  LHS()
+  < ASSIGNMENT >
+  RHS()
+  ";"
+}
+
+void comparison():
+{}
+{
+  (
+    < ID >
+  | < CONSTANT >
+  )+
+	  (
+	    < EQUAL >
+	  | < NOTEQUAL >
+	  | < GREATER >
+	  | < LESS >
+	  | < GREATEREQ >
+	  | < LESSEQ >
+	  )+
+  (
+    < ID >
+  | < CONSTANT >
+  ) 
+}
+
+void Variable(String type) :
+{
+  Token t;
+  String valueType = null;
+}
+{
+  t = < ID >
+  {
+    if (type.equals("int"))
+    {
+      if(st.checkValue("int "+ t.image)) { 
+		System.out.println("ERROR ! duplicate found for " + t.image);
+		return;
+	  }
+      jjtThis.value = t.image;
+      jjtThis.setType("int");
+      st.put(("ID" + count++), "int " + t.image);
+    }
+    else
+    {
+      if(!st.checkValue("int " + t.image)) { 
+		System.out.println("ERROR ! undeclared variable " + t.image);
+		return;
+	  }
+      jjtThis.value = t.image;       
+      valueType = st.fetchType(t.image); //fetching the type
+      if (valueType != null)
+      {
+        //System.out.println("Extracted Types::: " + valueType);
+        if (valueType.equals("int"))
+        {
+          jjtThis.setType("int");
+        }
+        
+      }
+    }
+  }
+}

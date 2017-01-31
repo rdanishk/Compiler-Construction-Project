@@ -1,0 +1,19 @@
+StartProgram
+initializationBlock:
+	int count;
+	int xyz; 
+	int abc; 
+	int result;
+codeBlock:
+	ifStart xyz > abc
+		result = xyz + abc; 
+	else
+		result = abc - xyz; 
+	ifEnd
+		outString(result);
+	
+	forLoop count=0 count<xyz count++
+		result = result *abc;
+	endLoop 
+	
+endProgram
