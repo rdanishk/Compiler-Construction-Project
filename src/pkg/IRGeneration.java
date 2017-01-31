@@ -45,17 +45,6 @@ public class IRGeneration
 
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	public void assemblyCode() {
 		System.out.println("Include Irvine32.inc");
 		System.out.println(".data");
